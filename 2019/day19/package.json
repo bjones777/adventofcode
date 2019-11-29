@@ -1,0 +1,17 @@
+{
+  "name": "day01",
+  "version": "1.0.0",
+  "description": "AoC day01 solution",
+  "main": "./bin/main.js",
+  "scripts": {
+    "run": "node .",
+    "debug": "node --inspect .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bradley Jones",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^12.12.14",
+    "typescript": "^3.7.2"
+  }
+}
