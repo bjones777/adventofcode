@@ -1,14 +1,13 @@
 {
   "name": "day01",
   "version": "1.0.0",
-  "description": "AoC day01 solution",
+  "description": "AoC 2019 day01 solution",
   "main": "./bin/main.js",
   "scripts": {
-    "compile": "tsc",
+    "prerun": "tsc",
     "run": "node .",
     "predebug": "tsc",
-    "debug": "node --inspect . < input.txt",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "debug": "node --inspect ."
   },
   "author": "Bradley Jones",
   "license": "ISC",
