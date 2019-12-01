@@ -4,8 +4,10 @@
   "description": "AoC day01 solution",
   "main": "./bin/main.js",
   "scripts": {
+    "compile": "tsc",
     "run": "node .",
-    "debug": "node --inspect .",
+    "predebug": "tsc",
+    "debug": "node --inspect . < input.txt",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Bradley Jones",

@@ -6,8 +6,28 @@ let rl = readline.createInterface({
     terminal: false
   });
 
+let partA = function(mass) {
+  return Math.floor(mass / 3) - 2;
+}
+
+let partB = function(mass) {
+  let amount = partA(mass);
+  if(amount <= 0) {
+    return 0; 
+  }
+  return amount + partB(amount);
+}
+
+var arr = [];
 rl.on('line',(line : string) => {
-    let freqs = line.split(',');
-    let res = freqs.reduce((sum, cv) => sum + parseInt(cv,10), 0);
-    console.log(res);    
+    let mass = parseInt(line,10);
+    arr.push(mass);
+    if(arr.length === 100) {
+      let ans = arr.reduce((prev, mass) => prev + partA(mass),0);
+      console.log(ans);    
+    }
+    if(arr.length === 100) {
+      let ans = arr.reduce((prev, mass) => prev + partB(mass),0);
+      console.log(ans);    
+    }
 }); 
