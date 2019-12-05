@@ -48,27 +48,11 @@ function decodeInstr(n: number): DecodedInstr {
   di.param3Mode = (a === 0) ? Mode.Position : Mode.Immediate;
 
   let e = de % 10;
-  if (e === Instr.Add) {
-    di.instr = Instr.Add;
-  } else if (e === Instr.Multiply) {
-    di.instr = Instr.Multiply;
-  } else if (e === Instr.Input) {
-    di.instr = Instr.Input;
-  } else if (e === Instr.Output) {
-    di.instr = Instr.Output;
-  } else if (e === Instr.JumpIfTrue) {
-    di.instr = Instr.JumpIfTrue
-  } else if (e === Instr.JumpIfFalse) {
-    di.instr = Instr.JumpIfFalse;
-  } else if (e === Instr.LessThan) {
-    di.instr = Instr.LessThan;
-  } else if (e === Instr.Equals) {
-    di.instr = Instr.Equals;
-  } else if (de == Instr.Halt) {
-    di.instr = Instr.Halt;
-  } else {
+  let instrKey = Object.keys(Instr).find(key => Instr[key] === e || Instr[key] === de); 
+  if(instrKey == null) {
     throw new Error(`Invalid instrcution ${de}`);
   }
+  di.instr = Instr[instrKey];
   if (di.instr !== Instr.Halt) {
     let d = Math.floor(de / 10);
     di.instrMode = (d === 0) ? Mode.Position : Mode.Immediate;
