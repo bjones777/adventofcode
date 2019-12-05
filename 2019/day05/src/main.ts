@@ -1,5 +1,4 @@
 import * as readline from 'readline';
-import { decode } from 'punycode';
 
 let rl = readline.createInterface({
   input: process.stdin,
