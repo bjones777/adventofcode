@@ -1,5 +1,3 @@
-import * as readline from 'readline';
-
 let total = 0;
 let total2 = 0;
 let digits = [];
