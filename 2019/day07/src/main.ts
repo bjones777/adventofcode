@@ -6,17 +6,6 @@ let rl = readline.createInterface({
   terminal: false
 });
 
-let input = 1;
-function getInput(): number {
-  return input;
-}
-
-let output = 0;
-function setOutput(v: number) {
-  console.log(v);
-  output = v;
-}
-
 enum Instr {
   Add = 1,
   Multiply = 2,
@@ -28,6 +17,7 @@ enum Instr {
   Equals = 8,
   Halt = 99
 };
+
 enum Mode { Position = 0, Immediate = 1 };
 class DecodedInstr {
   public instr: Instr;
@@ -319,5 +309,4 @@ rl.on('close', () => {
   console.log(partATryAll());
   console.log("Part B");
   console.log(partBTryAll());
-  
 });
