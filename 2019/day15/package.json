@@ -7,7 +7,7 @@
     "prerun": "tsc",
     "run": "node .",
     "predebug": "tsc",
-    "debug": "node --inspect ."
+    "debug": "node --inspect-brk . < partB.txt"
   },
   "author": "Bradley Jones",
   "license": "ISC",
