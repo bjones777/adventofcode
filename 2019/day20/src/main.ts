@@ -72,7 +72,7 @@ enum TileType {
 
 interface Tile {
   type : TileType;
-  gate?: string;
+  gate?: { name: string, depthChange: number};
 }
 
 const lines : string[] = [];
@@ -95,7 +95,7 @@ function getGateLocation(maze : Map<string,Tile>, gate: string, ignorePoint?: Po
         let newTile = maze.get(np.getKey());
         if(newTile == null) continue;
         if(newTile.gate == null) continue;
-        if(newTile.gate === gate) {
+        if(newTile.gate.name === gate) {
           return p;
         }
       }
@@ -118,13 +118,12 @@ function moveInMaze(maze : Map<string,Tile>,sp : Point,d : Direction) : Point {
   if(tile.type === TileType.closed) return sp;
   if(tile.type === TileType.open) return np;
   if(tile.gate == null) throw new Error("What is this?");
-  if(tile.gate === "AA") return sp;
+  if(tile.gate.name === "AA") return sp;
   
-  return getGateLocation(maze,tile.gate,sp);
+  return getGateLocation(maze,tile.gate.name,sp);
 }
 
-
-function partA() {
+function createMaze() : Map<string,Tile> {
   const maze = new Map<string,Tile>();
   lines.forEach((line, y) => {
     for(let x = 0;x < line.length;++x) {
@@ -140,6 +139,35 @@ function partA() {
       }
     }
   });
+  let NW = new Point(-1,-1);
+  let SW = new Point(-1,-1);
+  let NE = new Point(-1,-1);
+  let SE = new Point(-1,-1);
+  maze.forEach((value: Tile, key: string) => {
+    let coord = key.split(',');
+    const p = new Point(Number(coord[0]),Number(coord[1]));
+    const notHasNorth = !maze.has(moved(p, Direction.N).getKey()); 
+    const notHasSouth = !maze.has(moved(p, Direction.S).getKey()); 
+    const notHasEast = !maze.has(moved(p, Direction.E).getKey());
+    const notHasWest = !maze.has(moved(p, Direction.W).getKey());
+    if(notHasNorth && notHasEast) {
+      NE = p;
+    }
+    if(notHasNorth && notHasWest) {
+      NW = p;
+    }
+    if(notHasSouth && notHasEast) {
+      SE = p;
+    }
+    if(notHasSouth && notHasWest) {
+      SW = p;
+    }
+  });
+  const minX = NW.x;
+  const maxX = NE.x;
+  const minY = NW.y;
+  const maxY = SW.y;
+  
   lines.forEach((line, y) => {
     for(let x = 0;x < line.length;++x) {
       let s = line[x];
@@ -147,6 +175,10 @@ function partA() {
       if(s === '.') continue; 
       if(s === '#') continue;
       const p = new Point(x,y);
+      let depthChange = 1;
+      if(p.x < minX || p.x > maxX || p.y < minY || p.y > maxY) {
+        depthChange = -1;
+      }
       for(let d = 0;d < 4;++d) {
         const np = moved(p,d);
         const tile = maze.get(np.getKey());
@@ -155,15 +187,19 @@ function partA() {
           const op = moved(p,od);
           const otherLetter = lines[op.y][op.x];
           if(od === Direction.N || od === Direction.W) {
-            maze.set(p.getKey(),{ type: TileType.gate, gate: `${otherLetter}${s}`});
+            maze.set(p.getKey(),{ type: TileType.gate, gate: {name: `${otherLetter}${s}`, depthChange: depthChange}});
           }
           else {
-            maze.set(p.getKey(),{ type: TileType.gate, gate: `${s}${otherLetter}`});
+            maze.set(p.getKey(),{ type: TileType.gate, gate: {name: `${s}${otherLetter}`, depthChange: depthChange}});
           }
         }
       }
     }
   });
+  return maze;
+}
+
+function printMaze(maze : Map<string,Tile>) {
   for(let y = 0;y < 22;++y) {
     let line = '';
     for(let x = 0;x < 22;++x) {
@@ -180,13 +216,43 @@ function partA() {
             line += '.';
             break;
           case TileType.gate:
-            line += 'G';
+            if(tile.gate == null) {
+              throw new Error("gate is not defined")
+            }
+            if(tile.gate.depthChange < 1) {
+              line += 'G';
+            }
+            else {
+              line += 'g';
+            }
             break;
         }
       }
     }
     console.log(line);
   }
+}
+
+function moveInMazeB(maze : Map<string,Tile>, sp : Point,depth: number,d : Direction) : { point: Point, depth: number } {
+  const np = moved(sp,d);
+  let tile = maze.get(np.getKey());
+  if(tile.type === TileType.closed) return { point: sp, depth: depth};
+  if(tile.type === TileType.open) return { point: np, depth: depth };
+  if(tile.gate == null) throw new Error("What is this?");
+  if(tile.gate.name === "AA") return { point: sp, depth: depth};
+  if(tile.gate.name === "ZZ") return { point: sp, depth: depth};
+
+  const newDepth = depth + tile.gate.depthChange;
+  if(newDepth < 0) {
+    return { point: sp, depth: depth};
+  }
+  
+  return { point: getGateLocation(maze,tile.gate.name,sp), depth: newDepth };
+}
+
+function partA() {
+  const maze = createMaze(); 
+  printMaze(maze);
 
   const endLoc = getEndLocation(maze);
   const visited = new Set<string>();
@@ -211,10 +277,42 @@ function partA() {
   }
 }
 
+function getVisitedKey(p : Point, d : number) : string {
+  return `${p.getKey()},${d}`;
+}
+
+function partB() {
+  const maze = createMaze(); 
+  const endLoc = getEndLocation(maze);
+  const visited = new Set<string>();
+  const toVisit = [{loc: getStartLocation(maze), depth: 0, numMoves: 0 }];
+  while(toVisit.length > 0) {
+    const curr = toVisit.shift();
+    //console.log(`loc: ${curr.loc.getKey()}, depth: ${curr.depth}, numMoves: ${curr.numMoves}`);
+    if(curr.loc.x == endLoc.x && curr.loc.y === endLoc.y && curr.depth === 0) {
+      return curr.numMoves;
+    }
+    const visitedKey = getVisitedKey(curr.loc,curr.depth);
+    if(visited.has(visitedKey)) {
+      continue;
+    }
+    visited.add(visitedKey);
+    for(let d = 0;d < 4;++d) {
+      const np = moveInMazeB(maze,curr.loc,curr.depth,d);
+      if(visited.has(getVisitedKey(np.point,np.depth))) {
+        continue;
+      }
+      toVisit.push({loc: np.point, depth: np.depth, numMoves: curr.numMoves+1});
+    }
+  }
+}
+
 rl.on('close', () => {
   try {
     console.log("Part A");
     console.log(partA());
+    console.log("Part B");
+    console.log(partB());
   } catch(e) {
     console.log(e);
   }

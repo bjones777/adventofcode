@@ -6,50 +6,95 @@ let rl = readline.createInterface({
     terminal: false
   });
 
-let pattern = [1n, 0n, -1n, 0n];
+let pattern = [1, 0, -1, 0];
 
-function calcDigit(input : string,index : number) : string {
-  let v = 0n;
+function calcDigitSlow(input : number[],input2: number[], index : number) : number {
+  let v = 0;
   for(let i = index;i < input.length; ++i) {
-    let pi = Math.floor((i - index)/(index+1)) % pattern.length;  
-    v += pattern[pi] * BigInt(input[i]);
+    let pi = Math.floor((i - index)/(index+1)) % pattern.length; 
+    let pv = pattern[pi];
+    v += pv * input[i];
   }
   if(v < 0) {
     v = -v;
   }
-  v = v % 10n;
-  return v.toString();
+  v = v % 10;
+  return v;
 }
 
-  function FFT(input : string) : string {
-    let output = [];
-    for(let i = 0;i < input.length;++i) {
-      output.push(calcDigit(input,i));
+function calcDigit(input : number[],input2: number[], index : number) : number {
+  let v = 0;
+  for(let i = index;i < input.length; ++i) {
+    let pi = Math.floor((i - index)/(index+1)) % pattern.length; 
+    let pv = pattern[pi];
+    if(pv === 0) {
+      i += index;
+    } 
+    else if(pv === 1) {
+      v += input2[Math.min(input2.length-1,i + index + 1)] - input2[i];
+      i += index;
     }
-    return output.join('');
+    else if(pv === -1) {
+      v -= input2[Math.min(input2.length-1,i + index + 1)] - input2[i];
+      i += index;
+    }
+    else {
+      v += pv * input[i];
+    }
+  }
+  if(v < 0) {
+    v = -v;
+  }
+  v = v % 10;
+  return v;
+}
+
+  function FFT(input : number[]) : number[] {
+    let sumTable = [0];
+    for(let i = 0;i < input.length;++i) {
+      sumTable.push(sumTable[sumTable.length-1] + input[i]);
+    }
+    let retVal = [];
+    for(let i = 0;i < input.length;++i) {
+      retVal.push(calcDigit(input,sumTable, i));
+    }
+    return retVal;
   }
 
   let i = "12345678";
-  console.log(FFT(i));
+  console.log(FFT(convertSignalToInput(i)));
+
+  function convertSignalToInput(signal: string) : number[] {
+    let input = [];
+    for(let i = 0;i < signal.length;++i) {
+      input.push(Number(signal[i]));
+    }
+    return input;
+  }
 
   function partA(signal : string) {
+    let input = convertSignalToInput(signal);
+    
     for(let i = 0;i < 100;++i) {
-      signal = FFT(signal);
+      input = FFT(input);
     }
-    console.log(signal.substr(0,8));
+    console.log(input.map(x => x.toString()).join('').substr(0,8));
   }
 
   function partB(signal : string) {
-   let realSignal = signal;
-    for(let i = 0;i < 10000;++i) {
-      realSignal += signal;
-    }
+    let offset = parseInt(signal.substr(0,7),10);
+    let input = convertSignalToInput(signal);
+    let realInput = [];
+    for(let i = 0;i < input.length * 10000;++i) {
+      realInput.push(input[i % input.length]);
+    } 
+    input = realInput;
+    
     for(let i = 0;i < 100;++i) {
-      console.log(`${i}...`);
-      realSignal = FFT(realSignal);
+      input = FFT(input);
     }
-    let offset = Number(signal.substr(0,7));
-    console.log(realSignal.substr(offset,8));
+    signal = input.map(x => x.toString()).join('');
+    console.log(signal.substr(offset,8));
   }
 
 rl.on('line',(line : string) => {
@@ -57,5 +102,4 @@ rl.on('line',(line : string) => {
     console.log(signal.length);
     partA(signal);
     partB(signal);
-
 }); 
