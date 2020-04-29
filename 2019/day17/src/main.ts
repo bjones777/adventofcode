@@ -280,6 +280,41 @@ enum TurnDir {
   Right = 1,
 }
 
+function turnDir(td : TurnDir, d : Direction) : Direction {
+  if(td === TurnDir.Left) {
+    return turnLeft(d);
+  }
+  return turnRight(d);
+} 
+
+function turnLeft(d: Direction) : Direction
+{
+  switch(d) {
+    case Direction.N:
+      return Direction.W;
+    case Direction.W:
+      return Direction.S;
+    case Direction.S:
+      return Direction.E;
+    default:
+      return Direction.N;
+  }
+}
+
+function turnRight(d: Direction) : Direction
+{
+  switch(d) {
+    case Direction.N:
+      return Direction.E;
+    case Direction.E:
+      return Direction.S;
+    case Direction.S:
+      return Direction.W;
+    default:
+      return Direction.N;
+  }
+}
+
 function toNumber(d : Direction) : number {
   if(d === Direction.N) {
     return 1;
@@ -349,6 +384,9 @@ function printBoard() {
         if(n === 1) {
           line.push('#');
         }
+        else {
+          line.push(String.fromCharCode(n));
+        }
       }
     }
     console.log(line.join(''));
@@ -374,7 +412,7 @@ function partA() {
     }
     else if (v === 60n || v === 62n || v === 94n || v === 118n) {
       let key = getCoordKey(lineX,lineY);
-      panels.set(key,1);
+      panels.set(key,Number(v.toString()));
       lineX++;
     } else {
       if(v !== 46n) {
@@ -415,10 +453,169 @@ function isJunction(x : number,y : number) {
   return true;
 }
 
+function findCurrentLocation() : Point {
+  for(let [key,value] of panels.entries()) {
+    if(value !== 1) {
+      let [x,y] = key.split(',');
+      return new Point(Number(x),Number(y));
+    }
+  }
+  throw new Error("Could not find current location");
+}
+
+function addVisited(visited : Map<string,number>,location : Point) : void {
+  const locKey = location.getKey();
+  if(visited.has(locKey)) {
+    visited.set(locKey,visited.get(locKey) + 1);
+  }
+  else {
+    visited.set(locKey,1);
+  }
+}
+
+function removeVisited(visited : Map<string,number>,location : Point) : void {
+  const locKey = location.getKey();
+  const v = visited.get(locKey);
+  if(v !== 1) {
+    visited.set(locKey,v - 1);
+  }
+  else {
+    visited.delete(locKey);
+  }
+}
+
+enum TryInstr {
+  F = 0,
+  LF = 1,
+  RF = 2,
+}
+
+function tryInst(ti : TryInstr,location : Point, instr : string[], visited : Map<string,number>, d : Direction, unvisited : boolean) : boolean {
+  if(ti !== TryInstr.F) {
+    let td = ti - 1;
+    d = turnDir(td,d);
+    instr.push(td === TurnDir.Left ? "L" : 'R');
+  }
+  let newLoc = moved(location,d);
+  if((!unvisited || !visited.has(newLoc.getKey())) && panels.has(newLoc.getKey())) { 
+    instr.push('F');
+    if(doFindPathRecursive(newLoc,instr,visited,d)) {
+      return true;
+    }
+    instr.pop();
+  }
+  if(ti !== TryInstr.F) {
+    instr.pop();
+  }
+}
+
+let foundSet = new Set<string>();
+
+function getInstrStr(instr : string[]) : string {
+  let run = 0;
+  let strArr = [];
+  for(let i = 0;i < instr.length;++i) {
+    let cmd = instr[i];
+    if(cmd === 'L' || cmd === 'R') {
+      if(run !== 0) {
+        strArr.push(run.toString());
+      }
+      run = 0;
+      strArr.push(cmd);
+    }
+    else {
+      run += 1;
+    }
+  }
+  if(run !== 0) {
+    strArr.push(run.toString());
+  }
+  return strArr.join(',');
+}
+
+function doFindPathRecursive(location : Point, instr : string[], visited : Map<string,number>, d : Direction) : boolean {
+  addVisited(visited, location);
+  if(visited.size === panels.size) {
+    return true;
+  }
+
+  for(let i = 0;i < 2;++i) {
+    for(let ti = 0;ti < 3;++ti) {
+      if(tryInst(ti,location, instr, visited, d, i === 0)) {
+        return true;
+      }
+    }
+  }
+  removeVisited(visited,location);
+  return false;
+}
+
+function findPath() : string {
+  let currentLocation = findCurrentLocation();
+  let dir = Direction.N;
+  console.log(currentLocation.getKey());
+  let instr = [];
+  let visited = new Map<string,number>();
+  
+  if(doFindPathRecursive(currentLocation,instr,visited,dir)) {
+    return getInstrStr(instr);
+  }
+  else {
+    console.log("No path found");
+    throw new Error("No path found!");
+  }
+  
+  
+}
+
+function replaceAll(str: string, pattern: string, repStr: string) : string {
+  const regEx = new RegExp(pattern,"g");
+  return str.replace(regEx, repStr);
+}
+
+function sendInput(s : Simulator, str : string) {
+  for(let i = 0;i < str.length;++i) {
+    console.log(str.codePointAt(i));
+    s.pushInput(BigInt(str.codePointAt(i)));
+  }
+  s.pushInput(10n);
+}
+
+function partB() {
+  let path = findPath();
+
+  let a = "L,6,R,8,L,4,R,8,L,12"; 
+  let b = "L,12,R,10,L,4";
+  let c = "L,12,L,6,L,4,L,4"; 
+
+  path = replaceAll(path,a,"A");
+  path = replaceAll(path,b,"B");
+  path = replaceAll(path,c,"C");
+  
+  let arrCopy = arr.slice();
+  arrCopy[0] += 1n;
+  let s = new Simulator(arrCopy);
+ 
+  sendInput(s,path);
+  sendInput(s,a);
+  sendInput(s,b);
+  sendInput(s,c);
+  sendInput(s,"n");
+  s.setInputCallback(() : bigint => {
+    throw new Error(`Input called?`);
+  });
+  s.setOutputCallback((v:bigint) => {
+    console.log(`Output ${v.toString()}`);
+  });
+  s.runSimInternal();
+}
+
 rl.on('close', () => {
   try {
     console.log("Part A");
     partA();
+    console.log("Part B");
+    partB();
   } catch(e) {
     console.log(e);
   }

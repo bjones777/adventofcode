@@ -136,41 +136,66 @@ function getVisistedString2(locs: Point[],keys: string[]) : string {
   return [... locs.map(x=>x.getKey()), ...keys].join();
 } 
 
-function canMoveTo2(locs: Point[], index: number, loc: Point, keys: string[], visited: Set<string>) : boolean {
+function canMoveTo2(locs: Point[], index: number, loc: Point, keys: string[], visited: Set<string>[]) : boolean {
   let key = loc.getKey();
   let v = map.get(key);
   if(v === '#') return false;
   if(v === '.' || v === v.toLowerCase() || (v === v.toUpperCase() && keys.includes(v.toLowerCase()))) {
-    let oldP = locs[index];
-    locs[index] = loc;
-    let vs = getVisistedString2(locs,keys);
-    locs[index] = oldP;
-    if(!visited.has(vs)) {
+    let vs = getVisistedString3(loc,keys);
+    if(!visited[index].has(vs)) {
       return true;
     }
   }
   return false;
 }
 
+function getVisistedString3(loc: Point,keys: string[]) : string {
+  return [loc.getKey(), ...keys].join();
+} 
+
+function addVisited(index : number, locs : Point[], visited : Set<string>[], keys : string[]) {
+  if(index < 0 || index >= visited.length) {
+    locs.forEach((loc,i) => {
+      let key = getVisistedString3(loc,keys);
+      visited[i].add(key);
+    });
+    return; 
+  }
+  let key = getVisistedString3(locs[index],keys);
+  visited[index].add(key);
+}
+
+function hasAndAddIfMissing(index : number, locs : Point[], visited : Set<string>[], keys : string[]) : boolean {
+  if(index >= 0 && index <= visited.length) {
+    let key = getVisistedString3(locs[index],keys);
+    if(visited[index].has(key)) {
+      return true;
+    }
+  }
+  addVisited(index,locs,visited,keys);
+  return false;
+}
+
 function partB() {
   let startPoints = adjustMap();
   let queue = [];
-  let visited = new Set<string>();
-  queue.push({locs: startPoints, dist:0, keys: []});
+  let visited : Set<string>[] = [];
+  for(let i = 0;i < 4;++i) {
+    visited.push(new Set<string>());
+  }
+  queue.push({locs: startPoints, dist:0, moved: -1, keys: []});
   while (queue.length !== 0) {
     let e = queue.shift();
-    let vs = getVisistedString2(e.locs, e.keys);
-    if(visited.has(vs)) continue;
-    visited.add(vs);
+    if(hasAndAddIfMissing(e.moved, e.locs, visited, e.keys)) continue;
     let newKeys = e.keys;
-    e.locs.forEach(loc => {
-      let value = map.get(loc.getKey());
+    if(e.moved !== -1) {
+      let value = map.get(e.locs[e.moved].getKey());
       if(keys.has(value) && !newKeys.includes(value)) {
         newKeys = newKeys.slice();
         newKeys.push(value);
         newKeys.sort();
       }
-    });
+    }
     if(newKeys.length === keys.size) {
       return e.dist;
     }
@@ -181,7 +206,7 @@ function partB() {
         if(canMoveTo2(e.locs,index,np,newKeys,visited)) {
           let newLocs = e.locs.slice();
           newLocs[index] = np;
-          queue.push({locs: newLocs, dist: e.dist+1, keys: newKeys});
+          queue.push({locs: newLocs, dist: e.dist+1, moved: index, keys: newKeys});
         }
       }
     });
