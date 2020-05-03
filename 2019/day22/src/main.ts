@@ -7,6 +7,7 @@ let rl = readline.createInterface({
   });
 
   const numCards = 10007;
+  //const numCards = 10;
 
   let deck = new Array(numCards).fill(0).map((v,i) => i);
 
@@ -84,6 +85,8 @@ let rl = readline.createInterface({
     }
   }
 
+  const lines = [];
+
   function runTests() {
     test1();
     test2();
@@ -92,8 +95,7 @@ let rl = readline.createInterface({
 
   //runTests();
 
-  const lines = [];
-
+  
   function doLines() {
     lines.forEach(line => {
       if(line.startsWith("deal into new stack")) {
@@ -116,18 +118,118 @@ rl.on('line',(line : string) => {
     
 }); 
 
+class lcf {
+  private a : bigint;
+  private b : bigint;
+
+  constructor(a : bigint, b: bigint) {
+    this.a = a;
+    this.b = b;
+  }
+
+  compose(inner : lcf, m : bigint) : lcf {
+    let c = (this.a * inner.a) % m;
+    let d = (this.a * inner.b + this.b) % m;
+    return new lcf(c,d);
+  }
+
+  evaluate(x : bigint, m : bigint) : bigint {
+    return (this.a * x + this.b) % m;
+  }
+
+  print() {
+    console.log(`f(n) = ${this.a} * x + ${this.b}`);
+  }
+
+  solve(d : bigint, m: bigint) : bigint[] {
+    let b = d - this.b;
+    let res = extendedEuclid(this.a, m);
+    if(res[0] != 0n || b != 0n) {
+      let arr = [];
+      let x0 = (res[1] * (b/res[0])) % m;
+      for(let i = 0n;i <= res[0];++i) {
+        arr.push((x0 + i*m/res[0]) % m);
+      }
+      return arr;
+    }
+    return [];
+  }
+}
+
+function pow_compose(fn : lcf, e : bigint, m : bigint) : lcf {
+  let g = new lcf(1n, 0n);
+    while (e > 0) {
+        if (e % 2n === 1n) {
+          g = g.compose(fn,m);
+        }
+        e = e/2n;
+        fn = fn.compose(fn,m);
+    }
+    return g;
+}
+
+function extendedEuclid(a : bigint, b: bigint) : bigint[] {
+  let s = 0n;
+  let t = 1n;
+  let r = b;
+  let so = 1n;
+  let to = 0n;
+  let ro = a;
+  while(r != 0n) {
+    let q = ro / r;
+    let temp;
+
+    //r
+    temp = r;
+    r = ro - q * r;
+    ro = temp;
+    
+    // s
+    temp = s;
+    s = so - q * s;
+    so = temp;
+
+    // t
+    temp = t;
+    t = to - q * t;
+    to = temp;
+  }
+  return [ro, so, to];
+}
+
+function partB() {
+  let numCards = 119315717514047n;
+  let iters = 101741582076661n;
+  let lcfs = lines.map((line) => {
+    if(line.startsWith("deal into new stack")) {
+      return new lcf(-1n,-1n);
+    }
+    else if(line.startsWith("cut ")) {
+      let amount = BigInt(line.substr(4));
+      return new lcf(1n,-amount);
+    }
+    let amount = BigInt(line.substr(20));
+    return new lcf(amount,0n);
+  });
+  let masterLcf = lcfs.reduce((f, g) => g.compose(f,numCards), new lcf(1n,0n));
+  masterLcf = pow_compose(masterLcf,BigInt(iters),numCards);
+  let ans = masterLcf.solve(2020n,numCards)[0];
+  while(ans < 0) {
+    ans += numCards;
+  }
+  console.log(ans.toString());
+}
+
+
 rl.on('close', () => {
   try {
     console.log("Part A");
+    newDeal();
     doLines();
     console.log(deck.findIndex(x => x === 2019));
 
     console.log("Part B");
-    for(let i = 0;i < 2000;++i) {
-      doLines();
-      console.log(deck[2020]);
-    }
-   
+    partB();
   } catch(e) {
     console.log(e);
   }

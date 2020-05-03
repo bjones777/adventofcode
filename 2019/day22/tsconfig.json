@@ -5,7 +5,8 @@
         "removeComments": true,
         "preserveConstEnums": true,
         "sourceMap": true,
-        "outDir": "bin"
+        "outDir": "bin",
+        "target": "ESNEXT"
     },
     "include": [
         "src/**/*"
