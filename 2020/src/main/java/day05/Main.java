@@ -4,14 +4,7 @@ import lombok.*;
 import java.io.*;
 import java.util.*;
 
-import javax.management.RuntimeErrorException;
-
 public class Main {
-
-
-
-    
-    
     public static int toSeat(String line) {
         int lbr = 0;
         int ubr = 128;
