@@ -157,6 +157,18 @@ class lcf {
 }
 
 function pow_compose(fn : lcf, e : bigint, m : bigint) : lcf {
+  if(e === 1n) {
+    return fn;
+  }
+  let fn2 = pow_compose(fn,e/2n,m);
+  fn2 = fn2.compose(fn2,m);
+  if(e % 2n === 1n) {
+    fn2 = fn.compose(fn2,m);
+  }
+  return fn2;
+}
+
+function pow_compose2(fn : lcf, e : bigint, m : bigint) : lcf {
   let g = new lcf(1n, 0n);
     while (e > 0) {
         if (e % 2n === 1n) {
@@ -169,32 +181,14 @@ function pow_compose(fn : lcf, e : bigint, m : bigint) : lcf {
 }
 
 function extendedEuclid(a : bigint, b: bigint) : bigint[] {
-  let s = 0n;
-  let t = 1n;
-  let r = b;
-  let so = 1n;
-  let to = 0n;
-  let ro = a;
-  while(r != 0n) {
-    let q = ro / r;
-    let temp;
-
-    //r
-    temp = r;
-    r = ro - q * r;
-    ro = temp;
+  let rst = [b, 0n, 1n];
+  let rsto = [a, 1n, 0n];
+  while(rst[0] != 0n) {
+    let q = rsto[0] / rst[0];
     
-    // s
-    temp = s;
-    s = so - q * s;
-    so = temp;
-
-    // t
-    temp = t;
-    t = to - q * t;
-    to = temp;
+    [rst, rsto] = [rst.map((_, i) => rsto[i] - q * rst[i]), rst];
   }
-  return [ro, so, to];
+  return rsto;
 }
 
 function partB() {
