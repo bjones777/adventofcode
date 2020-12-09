@@ -31,18 +31,19 @@ public class Main {
     public static BigInteger partB(List<BigInteger> numbers, BigInteger targetNumber) {
         List<BigInteger> sums = new ArrayList<>();
         BigInteger sum = BigInteger.ZERO;
+        sums.add(sum);
         for(int i = 0;i < numbers.size();++i) {
             sum = sum.add(numbers.get(i));
             sums.add(sum);
         }
 
-        for(int i = 0;i < sums.size()-1;++i) {
+        for(int i = 1;i < sums.size()-1;++i) {
             for(int j = i+1;j < sums.size();++j) {
-                BigInteger diff = sums.get(j).subtract(sums.get(i));
+                BigInteger diff = sums.get(j).subtract(sums.get(i-1));
                 if(diff.equals(targetNumber)) {
-                    BigInteger min = numbers.get(i);
-                    BigInteger max = numbers.get(i);
-                    for(int ii = i + 1;ii <= j;++ii) {
+                    BigInteger min = numbers.get(i-1);
+                    BigInteger max = numbers.get(i-1);
+                    for(int ii = i;ii < j;++ii) {
                         BigInteger v = numbers.get(ii);
                         if(min.compareTo(v) < 0) min = v;
                         if(max.compareTo(v) > 0) max = v;
