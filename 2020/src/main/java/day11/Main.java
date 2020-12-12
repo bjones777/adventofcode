@@ -19,6 +19,8 @@ public class Main {
     }
 
     Map<SeatLocation, SeatState> seatStateMap = new HashMap<>();
+    int maxX = 0;
+    int maxY = 0;
 
     public Main() {   
     }
@@ -36,8 +38,10 @@ public class Main {
                         seatStateMap.put(new SeatLocation(x, y), SeatState.OCCUPIED);
                     }
                 }
+                maxX = Math.max(maxX, line.length());
                 ++y;
             }
+            maxY = y;
         }
     }
 
@@ -58,8 +62,7 @@ public class Main {
     private boolean foundOccupiedSeat(Map<SeatLocation, SeatState> in, SeatLocation l,int dx,int dy) {
         SeatLocation cl = new SeatLocation(l.getX()+dx, l.getY()+dy);
 
-        // TODO: Probably should have a way to drive this upper bound from the data
-        while((cl.getX() >= 0 && cl.getX() < 100) && (cl.getY() >= 0 && cl.getY() < 100)) {
+        while((cl.getX() >= 0 && cl.getX() < maxX) && (cl.getY() >= 0 && cl.getY() < maxY)) {
             if(in.containsKey(cl)) {
                 SeatState state = in.getOrDefault(cl, SeatState.EMPTY);
                 return state == SeatState.OCCUPIED;
