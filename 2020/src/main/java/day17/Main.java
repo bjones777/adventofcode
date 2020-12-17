@@ -71,7 +71,6 @@ public class Main {
         activePoints = new HashSet<>();
         activePoints.addAll(initialPoints);
         for(int i = 0;i < 6;++i) {
-            System.out.println(activePoints.size());
             activePoints = step();
         }
         return Integer.toString(activePoints.size());
@@ -117,7 +116,6 @@ public class Main {
         activePoints4D = new HashSet<>();
         activePoints4D.addAll(initialPoints4D);
         for(int i = 0;i < 6;++i) {
-            System.out.println(activePoints4D.size());
             activePoints4D = step2();
         }
         return Integer.toString(activePoints4D.size());
