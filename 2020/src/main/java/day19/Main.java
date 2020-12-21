@@ -1,10 +1,8 @@
 package day19;
 
-import common.*;
 
 import java.util.*;
 import java.util.regex.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.io.*;
 
@@ -22,6 +20,13 @@ public class Main {
     Pattern numberPattern = Pattern.compile("([0-9]+)");
     Map<Integer, Rule> rules = new HashMap<>();
     List<String> lines = new ArrayList<>();
+
+    @Value
+    static class QEntry {
+        int partIndex;
+        String leftOver;
+    }
+
     
     public class Rule {
         @Getter
@@ -35,47 +40,64 @@ public class Main {
             choices = Arrays.stream(splits[1].split("\\|")).map(ms -> ms.trim()).collect(Collectors.toList());
         }
 
-        public MatchPair matches(String input) {
+        public List<MatchPair> matches(String input) {
+            List<MatchPair> matches = new ArrayList<>();
             for(String choice : choices) {
-                val result = matches(input, choice);
-                if(result.isMatched()) {
-                    return result;
-                }
+                matches.addAll(matches(input, choice));                
             }
-            return new MatchPair(false, input);
+            return matches;
         }
 
-        public MatchPair matches(String input, String choice) {
-            String current = input;
+        
+        public List<MatchPair> matches(String input, String choice) {
+            List<MatchPair> pairs = new ArrayList<>();
+            Queue<QEntry> queue = new LinkedList<>();
             String[] parts = choice.split(" ");
-            for(String part : parts) {
+            
+            queue.add(new QEntry(0,input));
+            while(!queue.isEmpty()) {
+                val entry = queue.remove();
+                val part = parts[entry.getPartIndex()];
+                String current = entry.getLeftOver();
                 Matcher m = numberPattern.matcher(part);
                 if(m.matches()) {
                     int ruleNum = Integer.parseInt(m.group(1));
                     Rule newRule = rules.get(ruleNum);
-                    val matchResult = newRule.matches(current);
-                    if(!matchResult.isMatched()) {
-                        return new MatchPair(false,input);
+                    val matchResults = newRule.matches(current);
+                    for(val matchResult : matchResults) {
+                        if(matchResult.isMatched()) {
+                            if(entry.getPartIndex() + 1 == parts.length) {
+                                pairs.add(new MatchPair(true, matchResult.getLeftOver()));
+                            }
+                            else {
+                                queue.add(new QEntry(entry.getPartIndex() + 1, matchResult.getLeftOver()));
+                            }
+                        }
+                        
                     }
-                    current = matchResult.getLeftOver();
                 }
                 else {
                     String nibble = part.substring(1, 2);
-                    if(!current.startsWith(nibble)) {
-                        return new MatchPair(false,input);
+                    if(current.startsWith(nibble)) {
+                        if(entry.getPartIndex() + 1 == parts.length) {
+                            pairs.add(new MatchPair(true, current.substring(1)));
+                        }
+                        else {
+                            queue.add(new QEntry(entry.getPartIndex() + 1, current.substring(1)));
+                        }
                     }
-                    current = current.substring(1);
+                    
                 }
             }
-            return new MatchPair(true, current);
-        }
-    } 
+            return pairs;
+        } 
+    }
 
     public Main() {   
     }
 
     public void readInput() throws IOException {
-        try(val br = new BufferedReader(new InputStreamReader(Main.class.getClassLoader().getResourceAsStream("day19sample.txt")))) {
+        try(val br = new BufferedReader(new InputStreamReader(Main.class.getClassLoader().getResourceAsStream("day19.txt")))) {
             for(String line = br.readLine();line != null;line = br.readLine()) {
                 if(line.isBlank()) {
                     break;
@@ -94,7 +116,7 @@ public class Main {
         int cnt = 0;
         for(String line : lines) {
             val res = r.matches(line);
-            if(res.matched && res.getLeftOver().isEmpty()) {
+            if(res.stream().anyMatch(mp -> mp.matched && mp.getLeftOver().isEmpty())) {
                 ++cnt;
             }
         }
@@ -106,33 +128,13 @@ public class Main {
         Rule newRule11 = new Rule("11: 42 11 31 | 42 31");
         rules.put(newRule8.getNumber(),newRule8);
         rules.put(newRule11.getNumber(),newRule11);
-        Rule r = rules.get(0);
-        int cnt = 0;
-        for(String line : lines) {
-            val res = r.matches(line);
-            if(res.matched && res.getLeftOver().isEmpty()) {
-                ++cnt;
-            }
-        }
-        return Integer.toString(cnt);
+        return partA();
      }
 
-     public void test() {
-         Rule r = new Rule("0: \"a\" 0 | \"a\"");
-         rules.put(r.getNumber(),r);
-         String line = "aaaaaa";
-         val res = r.matches(line);
-         if(res.matched) {
-             System.out.println("Matched");
-         }
-         else {
-            System.out.println("Not matched");
-         }
-     }
+     
      
     public static void main(String[] args) throws IOException {
         val m = new Main();
-        m.test();
         m.readInput();
         System.out.println(String.format("Part A: %s", m.partA()));
         System.out.println(String.format("Part B: %s", m.partB()));
