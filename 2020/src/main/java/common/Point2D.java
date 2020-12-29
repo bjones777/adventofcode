@@ -24,4 +24,8 @@ public class Point2D {
         }
         throw new RuntimeException("Bad direction");
     }
+
+    public Point2D add(Point2D p) {
+        return new Point2D(x + p.x, y+p.y);
+    }
 }
