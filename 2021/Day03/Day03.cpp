@@ -9,7 +9,7 @@ using namespace std;
 int64_t bin2Dec(const string& s)
 {
     int64_t res = 0;
-    int numBits = s.size();
+    int numBits = static_cast<int>(s.size());
     for(int i = 0;i < numBits;++i) {
         res *= 2;
         if(s[i] == '1')
@@ -22,7 +22,7 @@ int64_t bin2Dec(const string& s)
 
 static int64_t partA(const vector<string>& allBits)
 {
-    int numBits = allBits.front().size();
+    int numBits = static_cast<int>(allBits.front().size());
     string gamma;
     string episilon;
     for(int i = 0;i < numBits; ++i)
