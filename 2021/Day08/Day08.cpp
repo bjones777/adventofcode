@@ -167,7 +167,9 @@ static int to_integer(const vector<string>& digits, const array<char,7>& mapping
     for(auto& digit : digits) 
     {
         value *= 10;
-        value += to_digit(digit, mapping);
+		int next_digit = to_digit(digit, mapping);
+		assert(next_digit != INVALID_DIGIT);
+        value += next_digit;
     }
     return value;
 }
