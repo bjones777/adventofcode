@@ -221,32 +221,12 @@ struct OnBlock
 vector<OnBlock> OnBlock::Intersect(const OffBlock& offBlock)
 {
 	vector<OnBlock> retVal;
-	if (offBlock.MaxX < MinX)
-	{
-		retVal.push_back(*this);
-		return retVal;
-	}
-	if (offBlock.MinX > MaxX)
-	{
-		retVal.push_back(*this);
-		return retVal;
-	}
-	if (offBlock.MaxY < MinY)
-	{
-		retVal.push_back(*this);
-		return retVal;
-	}
-	if (offBlock.MinY > MaxY)
-	{
-		retVal.push_back(*this);
-		return retVal;
-	}
-	if (offBlock.MaxZ < MinZ)
-	{
-		retVal.push_back(*this);
-		return retVal;
-	}
-	if (offBlock.MinZ > MaxZ)
+	if (offBlock.MaxX < MinX ||
+		offBlock.MinX > MaxX ||
+		offBlock.MaxY < MinY ||
+		offBlock.MinY > MaxY ||
+		offBlock.MaxZ < MinZ ||
+		offBlock.MinZ > MaxZ)
 	{
 		retVal.push_back(*this);
 		return retVal;
@@ -338,8 +318,6 @@ int64_t partB(const vector<CCommand>& commands)
 	}
 	return sum;
 }
-
-
 
 int main()
 {
