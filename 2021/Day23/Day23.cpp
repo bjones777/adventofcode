@@ -24,10 +24,12 @@ enum class ELocation
     WAIT_6,
     DEST_0,
     DEST_1,
+	DEST_2,
+	DEST_3,
 };
 
 static int GetNumLocations() {
-	return ((int)ELocation::DEST_1)+1;
+	return ((int)ELocation::DEST_3)+1;
 }
 
 static ELocation GetLocationAtIndex(int index) {
@@ -195,10 +197,10 @@ enum class EConfig
 
 struct BurrowState
 {
-	RowCol RowCol[8];
+	RowCol RowCol[16];
 	
 	bool operator==(const BurrowState& rhs) const {
-		for (int i = 0; i < 8; ++i) {
+		for (int i = 0; i < 16; ++i) {
 			if (!(RowCol[i] == rhs.RowCol[i]))
 			{
 				return false;
@@ -216,7 +218,7 @@ namespace std {
 		std::size_t operator()(const BurrowState& k) const
 		{
 			size_t retVal = 0;
-			for (int i = 0; i < 8; ++i) {
+			for (int i = 0; i < 16; ++i) {
 				retVal ^= hash<RowCol>()(k.RowCol[i]);
 			}
 			return retVal;
@@ -240,7 +242,7 @@ public:
 
 	BurrowState GetBurrowState() const {
 		BurrowState bs;
-		assert(Amphipods.size() == 8);
+		assert(Amphipods.size() == 16);
 		for (int i = 0; i < Amphipods.size(); ++i) {
 			const Amphipod& a = Amphipods[i];
 			bs.RowCol[i] = RowCol(a.GetRow(), a.GetColumn());
@@ -275,7 +277,7 @@ private:
     void InitConfigExample();
     void InitConfigPuzzle();
     static const int WIDTH = 13;
-    static const int HEIGHT = 5;
+    static const int HEIGHT = 7;
     vector<ESpaceType> Spaces;
     vector<Amphipod> Amphipods;
 };
@@ -333,6 +335,8 @@ RowCol Burrow::GetRowColumnForLocation(ELocation loc, EAmphipodType type) const
             }
             case ELocation::DEST_0:
             case ELocation::DEST_1:
+			case ELocation::DEST_2:
+			case ELocation::DEST_3:
                 {
                     const ESpaceType spaceType = GetSpaceTypeForAmphipodType(type);
                     int numLeft = (int)loc - (int)ELocation::DEST_0;
@@ -433,23 +437,26 @@ void Burrow::InitBurrow()
     for(int c = 0;c < 3;++c) {
         Spaces.push_back(ESpaceType::BLOCK);
     }
-    // row 4
-    for(int c = 0;c < 2;++c) {
-        Spaces.push_back(ESpaceType::EMPTY);
-    }
-    Spaces.push_back(ESpaceType::BLOCK);
-    Spaces.push_back(ESpaceType::ROOM_A);
-    Spaces.push_back(ESpaceType::BLOCK);
-    Spaces.push_back(ESpaceType::ROOM_B);
-    Spaces.push_back(ESpaceType::BLOCK);
-    Spaces.push_back(ESpaceType::ROOM_C);
-    Spaces.push_back(ESpaceType::BLOCK);
-    Spaces.push_back(ESpaceType::ROOM_D);
-    Spaces.push_back(ESpaceType::BLOCK);
-    for(int c = 0;c < 2;++c) {
-        Spaces.push_back(ESpaceType::EMPTY);
-    }
-    // row 5
+	// row 4-6
+	for(int i = 0; i < 3;++i) {
+		
+		for(int c = 0;c < 2;++c) {
+			Spaces.push_back(ESpaceType::EMPTY);
+		}
+		Spaces.push_back(ESpaceType::BLOCK);
+		Spaces.push_back(ESpaceType::ROOM_A);
+		Spaces.push_back(ESpaceType::BLOCK);
+		Spaces.push_back(ESpaceType::ROOM_B);
+		Spaces.push_back(ESpaceType::BLOCK);
+		Spaces.push_back(ESpaceType::ROOM_C);
+		Spaces.push_back(ESpaceType::BLOCK);
+		Spaces.push_back(ESpaceType::ROOM_D);
+		Spaces.push_back(ESpaceType::BLOCK);
+		for(int c = 0;c < 2;++c) {
+			Spaces.push_back(ESpaceType::EMPTY);
+		}
+	}
+    // row 7
     for(int c = 0;c < 2;++c) {
         Spaces.push_back(ESpaceType::EMPTY);
     }
@@ -466,16 +473,30 @@ void Burrow::InitConfigExample()
 {
     InitBurrow();    
     //BCBD
+	//DCBA
+	//DBAC#
+
     //ADCA
     Amphipods.push_back(Amphipod(EAmphipodType::B, 2,3, (int)Amphipods.size()));
     Amphipods.push_back(Amphipod(EAmphipodType::C, 2,5, (int)Amphipods.size()));
     Amphipods.push_back(Amphipod(EAmphipodType::B, 2,7, (int)Amphipods.size()));
     Amphipods.push_back(Amphipod(EAmphipodType::D, 2,9, (int)Amphipods.size()));
 
-    Amphipods.push_back(Amphipod(EAmphipodType::A, 3,3, (int)Amphipods.size()));
-    Amphipods.push_back(Amphipod(EAmphipodType::D, 3,5, (int)Amphipods.size()));
-    Amphipods.push_back(Amphipod(EAmphipodType::C, 3,7, (int)Amphipods.size()));
-    Amphipods.push_back(Amphipod(EAmphipodType::A, 3,9, (int)Amphipods.size()));
+	Amphipods.push_back(Amphipod(EAmphipodType::D, 3, 3, (int)Amphipods.size()));
+	Amphipods.push_back(Amphipod(EAmphipodType::C, 3, 5, (int)Amphipods.size()));
+	Amphipods.push_back(Amphipod(EAmphipodType::B, 3, 7, (int)Amphipods.size()));
+	Amphipods.push_back(Amphipod(EAmphipodType::A, 3, 9, (int)Amphipods.size()));
+
+	Amphipods.push_back(Amphipod(EAmphipodType::D, 4, 3, (int)Amphipods.size()));
+	Amphipods.push_back(Amphipod(EAmphipodType::B, 4, 5, (int)Amphipods.size()));
+	Amphipods.push_back(Amphipod(EAmphipodType::A, 4, 7, (int)Amphipods.size()));
+	Amphipods.push_back(Amphipod(EAmphipodType::C, 4, 9, (int)Amphipods.size()));
+
+
+    Amphipods.push_back(Amphipod(EAmphipodType::A, 5,3, (int)Amphipods.size()));
+    Amphipods.push_back(Amphipod(EAmphipodType::D, 5,5, (int)Amphipods.size()));
+    Amphipods.push_back(Amphipod(EAmphipodType::C, 5,7, (int)Amphipods.size()));
+    Amphipods.push_back(Amphipod(EAmphipodType::A, 5,9, (int)Amphipods.size()));
 }
 
 void Burrow::InitConfigPuzzle()
@@ -486,10 +507,21 @@ void Burrow::InitConfigPuzzle()
     Amphipods.push_back(Amphipod(EAmphipodType::D, 2,7, (int)Amphipods.size()));
     Amphipods.push_back(Amphipod(EAmphipodType::A, 2,9, (int)Amphipods.size()));
 
-    Amphipods.push_back(Amphipod(EAmphipodType::D, 3,3, (int)Amphipods.size()));
-    Amphipods.push_back(Amphipod(EAmphipodType::C, 3,5, (int)Amphipods.size()));
-    Amphipods.push_back(Amphipod(EAmphipodType::A, 3,7, (int)Amphipods.size()));
-    Amphipods.push_back(Amphipod(EAmphipodType::C, 3,9, (int)Amphipods.size()));
+	Amphipods.push_back(Amphipod(EAmphipodType::D, 3, 3, (int)Amphipods.size()));
+	Amphipods.push_back(Amphipod(EAmphipodType::C, 3, 5, (int)Amphipods.size()));
+	Amphipods.push_back(Amphipod(EAmphipodType::B, 3, 7, (int)Amphipods.size()));
+	Amphipods.push_back(Amphipod(EAmphipodType::A, 3, 9, (int)Amphipods.size()));
+
+	Amphipods.push_back(Amphipod(EAmphipodType::D, 4, 3, (int)Amphipods.size()));
+	Amphipods.push_back(Amphipod(EAmphipodType::B, 4, 5, (int)Amphipods.size()));
+	Amphipods.push_back(Amphipod(EAmphipodType::A, 4, 7, (int)Amphipods.size()));
+	Amphipods.push_back(Amphipod(EAmphipodType::C, 4, 9, (int)Amphipods.size()));
+
+
+    Amphipods.push_back(Amphipod(EAmphipodType::D, 5,3, (int)Amphipods.size()));
+    Amphipods.push_back(Amphipod(EAmphipodType::C, 5,5, (int)Amphipods.size()));
+    Amphipods.push_back(Amphipod(EAmphipodType::A, 5,7, (int)Amphipods.size()));
+    Amphipods.push_back(Amphipod(EAmphipodType::C, 5,9, (int)Amphipods.size()));
 }
 
 void Burrow::Print() const 
@@ -585,14 +617,20 @@ bool Burrow::MoveAmphipod(int id, ELocation dest)
 	ESpaceType spaceType = GetSpaceType(amphipod->GetRow(), amphipod->GetColumn());
 	if (spaceType == GetSpaceTypeForAmphipodType(amphipod->GetType()))
 	{
-		RowCol rowCol0 = GetRowColumnForLocation(ELocation::DEST_1, amphipod->GetType());
-		const Amphipod* a0 = GetAmphipodAtLocation(rowCol0.Row, rowCol0.Column);
-		if (a0 == amphipod) {
-			return false;
+		for (int i = (int)ELocation::DEST_3; i >= (int)ELocation::DEST_0; --i)
+		{
+			ELocation e = (ELocation)i;
+			RowCol rowCol = GetRowColumnForLocation(e, amphipod->GetType());
+			const Amphipod* a = GetAmphipodAtLocation(rowCol.Row, rowCol.Column);
+			if (a == amphipod)
+			{
+				return false;
+			}
+			else if (a->GetType() != amphipod->GetType()) {
+				break;
+			}
 		}
-		if (a0 != nullptr && a0->GetType() == amphipod->GetType()) {
-			return false;
-		}
+		
 	}
 
 	if (spaceType == ESpaceType::SPACE && dest >= ELocation::WAIT_0 && dest <= ELocation::WAIT_6) {
@@ -601,33 +639,34 @@ bool Burrow::MoveAmphipod(int id, ELocation dest)
 		// and will not move again until they can move fully into a room.)
 		return false;
 	}
-	if (dest >= ELocation::DEST_0 && dest <= ELocation::DEST_1)
+	if (dest >= ELocation::DEST_0 && dest <= ELocation::DEST_3)
 	{
 		// Amphipods will never move from the hallway into a room unless that room is their destination room 
 		// and that room contains no amphipods which do not also have that room as their own destination.
 		// If an amphipod's starting room is not its destination room, it can stay in that room until it leaves the room. 
 		// (For example, an Amber amphipod will not move from the hallway into the right three rooms, and will only move into the
 		// leftmost room if that room is empty or if it only contains other Amber amphipods.)
-		RowCol rowCol0 = GetRowColumnForLocation(ELocation::DEST_0, amphipod->GetType());
-		const Amphipod* a1 = GetAmphipodAtLocation(rowCol0.Row, rowCol0.Column);
-		if (a1 != nullptr && a1->GetType() != amphipod->GetType())
+		for(int i = (int)ELocation::DEST_0;i <= (int)ELocation::DEST_3;++i)
 		{
-			return false;
+			ELocation e = (ELocation)i;
+			RowCol rowCol = GetRowColumnForLocation(e, amphipod->GetType());
+			const Amphipod* a = GetAmphipodAtLocation(rowCol.Row, rowCol.Column);
+			if (a != nullptr && a->GetType() != amphipod->GetType())
+			{
+				return false;
+			}
 		}
 
-		RowCol rowCol1 = GetRowColumnForLocation(ELocation::DEST_1, amphipod->GetType());
-		const Amphipod* a2 = GetAmphipodAtLocation(rowCol1.Row, rowCol1.Column);
-		if (a2 != nullptr && a2->GetType() != amphipod->GetType())
+		// fill up lower holes before above ones
+		for (int i = (int)ELocation::DEST_3; i > (int)dest; --i)
 		{
-			return false;
-		}
-
-		// two has to fill up before 1
-		if (a1 == nullptr && a2 == nullptr && dest == ELocation::DEST_0) {
-			return false;
-		}
-
-				
+			ELocation e = (ELocation)i;
+			RowCol rowCol = GetRowColumnForLocation(e, amphipod->GetType());
+			const Amphipod* a = GetAmphipodAtLocation(rowCol.Row, rowCol.Column);
+			if (a == nullptr) {
+				return false;
+			}
+		}		
 	}
 	int pathCost = GetPathCost(amphipod, rowCol.Row, rowCol.Column);
 	if (pathCost < 0)
@@ -640,7 +679,7 @@ bool Burrow::MoveAmphipod(int id, ELocation dest)
 	return true;
 }
 
-int partA(Burrow burrow)
+int partB(Burrow burrow)
 {
 	unordered_map<BurrowState, int> enqueued;
 	int maxEnergy = 0;
@@ -676,6 +715,6 @@ int partA(Burrow burrow)
 int main(int argc,char* argv[]) 
 {
     Burrow burrow(EConfig::Puzzle);
-    cout << "Part A: " << partA(burrow) << '\n';
+    cout << "Part B: " << partB(burrow) << '\n';
     return 0;
 }
