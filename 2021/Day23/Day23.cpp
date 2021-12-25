@@ -319,6 +319,7 @@ private:
     vector<ESpaceType> Spaces;
     vector<Amphipod> Amphipods;
 	EPart Part;
+	vector<RowCol> WaitLocations;
 };
 
 int Burrow::GetEnergy() const {
@@ -356,7 +357,7 @@ RowCol Burrow::GetRowColumnForLocation(ELocation loc, EAmphipodType type) const
         case ELocation::WAIT_5:
         case ELocation::WAIT_6:
             {
-                int numLeft = (int)loc - (int)ELocation::WAIT_0;
+                int numLeft = (int)loc - (int)ELocation::WAIT_0;				
                 for(int r = 0, re = GetHeight()-1;r < re;++r) {
                     for(int c = 0, ce = GetWidth();c < ce;++c) {
                         if(GetSpaceType(r,c) == ESpaceType::SPACE && GetSpaceType(r+1,c) == ESpaceType::BLOCK) {
