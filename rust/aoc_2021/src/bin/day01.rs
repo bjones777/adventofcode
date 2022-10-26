@@ -1,5 +1,5 @@
-use itertools::Itertools;
 use aoc_2021::*;
+use itertools::Itertools;
 
 fn part_a(meausrements: &Vec<i32>) -> i32 {
     meausrements
