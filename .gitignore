@@ -1,6 +1,5 @@
 **/node_modules/**
 **/.vscode/**
-**/bin/**
 package-lock.json
 **/.DS_Store
 
@@ -24,7 +23,6 @@ package-lock.json
 x64/
 x86/
 bld/
-[Bb]in/
 [Oo]bj/
 [Ll]og/
 
