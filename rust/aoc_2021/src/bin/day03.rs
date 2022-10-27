@@ -1,130 +1,115 @@
 use aoc_2021::*;
 
-fn bin_to_dec(s: &String) -> u64 {
+fn bin_to_dec(v: &Vec<u8>) -> u64 {
     let mut res = 0;
-    for ch in s.chars() {
+    for x in v {
         res *= 2;
-        if ch == '1' {
-            res += 1;
-        }
+        res += *x as u64;
     }
     res
 }
 
-fn part_a(all_bits: &Vec<String>) -> u64 {
+fn part_a(all_bits: &Vec<Vec<u8>>) -> u64 {
     let n = all_bits[0].len();
 
-    let mut zero_counts = vec![0; n];
-    let mut one_counts = vec![0; n];
+    let mut counts = vec![vec![0; n], vec![0; n]];
 
     for bits in all_bits {
-        for (i, ch) in bits.chars().enumerate() {
-            if ch == '0' {
-                zero_counts[i] += 1;
-            } else {
-                assert_eq!(ch, '1');
-                one_counts[i] += 1;
-            }
+        for (i, x) in bits.iter().enumerate() {
+            counts[*x as usize][i] += 1;
         }
     }
 
-    let mut gamma = String::new();
-    let mut epsilon = String::new();
+    let mut gamma = Vec::new();
+    let mut epsilon = Vec::new();
 
     for i in 0..n {
-        if zero_counts[i] > one_counts[i] {
-            gamma.push('0');
-            epsilon.push('1');
+        if counts[0][i] > counts[1][i] {
+            gamma.push(0_u8);
+            epsilon.push(1_u8);
         } else {
-            assert!(zero_counts[i] != one_counts[i]);
-            gamma.push('1');
-            epsilon.push('0');
+            assert!(counts[1][i] > counts[0][i]);
+            gamma.push(1_u8);
+            epsilon.push(0_u8);
         }
     }
     bin_to_dec(&gamma) * bin_to_dec(&epsilon)
 }
 
-fn filter_by_bit(all_bits: &Vec<String>, bit_num: usize, most_or_least: bool) -> Vec<String> {
-    let mut zero_count = 0;
-    let mut one_count = 0;
+fn filter_by_bit(all_bits: Vec<Vec<u8>>, bit_num: usize, most_or_least: bool) -> Vec<Vec<u8>> {
+    let mut counts = vec![0; 2];
 
-    for bits in all_bits {
-        for ch in bits.chars().skip(bit_num).take(1) {
-            if ch == '0' {
-                zero_count += 1;
-            } else {
-                assert_eq!(ch, '1');
-                one_count += 1;
-            }
-        }
+    for bits in &all_bits {
+        let x = bits[bit_num] as usize;
+        counts[x] += 1;
     }
 
-    if zero_count == 0 || one_count == 0 {
-        return all_bits.clone();
+    if counts.iter().any(|x| *x == 0) {
+        return all_bits;
     }
-    if zero_count > one_count {
-        let mut ret_val: Vec<String> = Vec::new();
+    if counts[0] > counts[1] {
+        let mut ret_val: Vec<Vec<u8>> = Vec::new();
         for bits in all_bits {
-            for ch in bits.chars().skip(bit_num).take(1) {
-                if ch == '0' {
-                    if most_or_least {
-                        ret_val.push(bits.clone());
-                    }
-                } else {
-                    assert_eq!(ch, '1');
-                    if !most_or_least {
-                        ret_val.push(bits.clone());
-                    }
+            if bits[bit_num] == 0 {
+                if most_or_least {
+                    ret_val.push(bits);
+                }
+            } else {
+                assert_eq!(bits[bit_num], 1);
+                if !most_or_least {
+                    ret_val.push(bits);
                 }
             }
         }
         return ret_val;
     }
 
-    let mut ret_val: Vec<String> = Vec::new();
+    let mut ret_val: Vec<Vec<u8>> = Vec::new();
     for bits in all_bits {
-        for ch in bits.chars().skip(bit_num).take(1) {
-            if ch == '1' {
-                if most_or_least {
-                    ret_val.push(bits.clone());
-                }
-            } else {
-                assert_eq!(ch, '0');
-                if !most_or_least {
-                    ret_val.push(bits.clone());
-                }
+        if bits[bit_num] == 1 {
+            if most_or_least {
+                ret_val.push(bits);
+            }
+        } else {
+            assert_eq!(bits[bit_num], 0);
+            if !most_or_least {
+                ret_val.push(bits);
             }
         }
     }
-
     ret_val
 }
 
-fn part_b(all_bits: &Vec<String>) -> u64 {
-    let mut all_bits_oxygen = all_bits.clone();
-    {
+fn part_b(all_bits: &Vec<Vec<u8>>) -> u64 {
+    let mut prod = 1;
+    for i in 0..2 {
+        let mut el = all_bits.clone();
         let mut bit_num = 0;
-        while all_bits_oxygen.len() != 1 {
-            all_bits_oxygen = filter_by_bit(&all_bits_oxygen, bit_num, true);
+        while el.len() != 1 {
+            el = filter_by_bit(el, bit_num, i == 0);
             bit_num += 1;
         }
+        prod *= bin_to_dec(&el[0]);
     }
-
-    let mut all_bits_co2 = all_bits.clone();
-    {
-        let mut bit_num = 0;
-        while all_bits_co2.len() != 1 {
-            all_bits_co2 = filter_by_bit(&all_bits_co2, bit_num, false);
-            bit_num += 1;
-        }
-    }
-    bin_to_dec(&all_bits_oxygen[0]) * bin_to_dec(&all_bits_co2[0])
+    prod
 }
 
 fn main() {
-    let bits: Vec<String> = read_lines("./day03.txt")
+    let bits: Vec<Vec<u8>> = read_lines("./day03.txt")
         .unwrap()
         .map(|l| l.unwrap())
+        .map(|l| {
+            l.chars()
+                .map(|ch| {
+                    if ch == '0' {
+                        0_u8
+                    } else {
+                        assert_eq!(ch, '1');
+                        1_u8
+                    }
+                })
+                .collect()
+        })
         .collect();
     println!("Part A: {}", part_a(&bits));
     println!("Part B: {}", part_b(&bits));
