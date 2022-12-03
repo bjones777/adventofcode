@@ -9,7 +9,7 @@ fn char_to_value(ch: char) -> i32 {
     if lc >= 0 && lc < 26 {
         return lc + 1;
     }
-    panic!("can't map char");
+    panic!("can't map char {}", ch);
 }
 
 fn part_a(lines: &Vec<String>) -> i32 {
@@ -37,35 +37,32 @@ fn part_a(lines: &Vec<String>) -> i32 {
 
 fn part_b(lines: &Vec<String>) -> i32 {
     use std::collections::HashSet;
-    let num_groups = lines.len() / 3;
-    assert!(lines.len() % 3 == 0);
-    let mut sum = 0;
-    for i in 0..num_groups {
-        let a = &lines[i * 3 + 0];
-        let b = &lines[i * 3 + 1];
-        let c = &lines[i * 3 + 2];
-
-        let mut aset: HashSet<char> = HashSet::new();
-        for ch in a.chars() {
-            aset.insert(ch);
-        }
-        let mut bset: HashSet<char> = HashSet::new();
-        for ch in b.chars() {
-            if aset.contains(&ch) {
-                bset.insert(ch);
+    lines
+        .chunks(3)
+        .map(|chunk| {
+            if let [a, b, c] = &chunk[0..3] {
+                let mut a_set: HashSet<char> = HashSet::new();
+                for ch in a.chars() {
+                    a_set.insert(ch);
+                }
+                let mut ab_set: HashSet<char> = HashSet::new();
+                for ch in b.chars() {
+                    if a_set.contains(&ch) {
+                        ab_set.insert(ch);
+                    }
+                }
+                for ch in c.chars() {
+                    if ab_set.contains(&ch) {
+                        return ch;
+                    }
+                }
+                panic!("No overlap!");
+            } else {
+                panic!("non 0 remainder");
             }
-        }
-        let mut was_found = false;
-        for ch in c.chars() {
-            if bset.contains(&ch) {
-                sum += char_to_value(ch);
-                was_found = true;
-                break;
-            }
-        }
-        assert!(was_found);
-    }
-    sum
+        })
+        .map(|ch| char_to_value(ch))
+        .sum()
 }
 
 fn main() {
