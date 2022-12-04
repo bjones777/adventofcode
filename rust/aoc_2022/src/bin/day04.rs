@@ -36,8 +36,8 @@ fn main() {
         .unwrap()
         .map(|s| s.unwrap())
         .map(|s| {
-            if let [r1, r2] = &s.split(",").collect::<Vec<&str>>()[..] {
-                if let [s1, e1] = &r1.split("-").collect::<Vec<&str>>()[..] {
+            if let [r1, r2] = s.split(",").collect::<Vec<&str>>()[..] {
+                if let [s1, e1] = r1.split("-").collect::<Vec<&str>>()[..] {
                     if let [s2, e2] = r2.split("-").collect::<Vec<&str>>()[..] {
                         return (
                             (s1.parse::<i32>().unwrap(), e1.parse::<i32>().unwrap()),
