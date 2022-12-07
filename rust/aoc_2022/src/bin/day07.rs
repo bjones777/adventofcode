@@ -26,7 +26,7 @@ impl Entry {
         }
     }
 
-    fn traverse(&mut self, name: String) -> &mut Entry {
+    fn traverse(&mut self, name: &String) -> &mut Entry {
         let parts: Vec<String> = name.split("/").map(|s| String::from(s)).collect();
         let mut current_entry = self;
         for i in 1..(parts.len() - 1) {
@@ -74,11 +74,11 @@ fn build_directory_structure(lines: &Vec<String>) -> Entry {
     let mut current_dir = String::from("/");
     for line in lines {
         if let Some(cap) = dir_re.captures(line) {
-            let cd = root_entry.traverse(current_dir.clone());
+            let cd = root_entry.traverse(&current_dir);
             let dir_name = cap.get(1).unwrap().as_str();
             cd.add_dir(String::from(dir_name));
         } else if let Some(cap) = file_re.captures(line) {
-            let cd = root_entry.traverse(current_dir.clone());
+            let cd = root_entry.traverse(&current_dir);
             let file_name = cap.get(2).unwrap().as_str();
             let file_size = cap.get(1).unwrap().as_str().parse::<u64>().unwrap();
             cd.add_file(String::from(file_name), file_size);
