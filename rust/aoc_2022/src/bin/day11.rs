@@ -1,7 +1,7 @@
 use aoc_2022::*;
 
-use regex::Regex;
 use num_bigint::{BigInt, ToBigInt};
+use regex::Regex;
 
 enum Operation {
     Mul(BigInt),
@@ -22,8 +22,6 @@ struct Monkey {
     test: Test,
 }
 
-
-
 fn parse_operation(lines: &Vec<String>, line_num: usize) -> Operation {
     let add_re = Regex::new(r".*Operation. new = old \+ (\d+)").unwrap();
     let mul_re = Regex::new(r".*Operation. new = old \* (\d+)").unwrap();
@@ -31,11 +29,9 @@ fn parse_operation(lines: &Vec<String>, line_num: usize) -> Operation {
     let line = &lines[line_num];
     if let Some(cap) = add_re.captures(line) {
         return Operation::Add(cap.get(1).unwrap().as_str().parse::<BigInt>().unwrap());
-    }
-    else if let Some(cap) = mul_re.captures(line) {
+    } else if let Some(cap) = mul_re.captures(line) {
         return Operation::Mul(cap.get(1).unwrap().as_str().parse::<BigInt>().unwrap());
-    }
-    else if let Some(_) = sqr_re.captures(line) {
+    } else if let Some(_) = sqr_re.captures(line) {
         return Operation::Sqr;
     }
     panic!("Couldn't match operation");
@@ -46,9 +42,32 @@ fn parse_test(lines: &Vec<String>, line_num: usize) -> Test {
     let true_monkey_re = Regex::new(r".*If true. throw to monkey (\d+)").unwrap();
     let false_monkey_re = Regex::new(r".*If false. throw to monkey (\d+)").unwrap();
 
-    Test { divisible_by: div_re.captures(&lines[line_num+0]).unwrap().get(1).unwrap().as_str().parse::<BigInt>().unwrap(), 
-        if_true: true_monkey_re.captures(&lines[line_num+1]).unwrap().get(1).unwrap().as_str().parse::<usize>().unwrap(),
-        if_false: false_monkey_re.captures(&lines[line_num+2]).unwrap().get(1).unwrap().as_str().parse::<usize>().unwrap(),}
+    Test {
+        divisible_by: div_re
+            .captures(&lines[line_num + 0])
+            .unwrap()
+            .get(1)
+            .unwrap()
+            .as_str()
+            .parse::<BigInt>()
+            .unwrap(),
+        if_true: true_monkey_re
+            .captures(&lines[line_num + 1])
+            .unwrap()
+            .get(1)
+            .unwrap()
+            .as_str()
+            .parse::<usize>()
+            .unwrap(),
+        if_false: false_monkey_re
+            .captures(&lines[line_num + 2])
+            .unwrap()
+            .get(1)
+            .unwrap()
+            .as_str()
+            .parse::<usize>()
+            .unwrap(),
+    }
 }
 
 fn parse_starting_items(lines: &Vec<String>, line_num: usize) -> Vec<BigInt> {
@@ -56,30 +75,39 @@ fn parse_starting_items(lines: &Vec<String>, line_num: usize) -> Vec<BigInt> {
     let prefix = "Starting items: ";
     if let Some(index) = line.as_str().find(prefix) {
         let substr = line.chars().skip(index + prefix.len()).collect::<String>();
-        return substr.split(", ").map(|s| s.parse::<BigInt>().unwrap()).collect::<Vec<BigInt>>();
-    }
-    else {
+        return substr
+            .split(", ")
+            .map(|s| s.parse::<BigInt>().unwrap())
+            .collect::<Vec<BigInt>>();
+    } else {
         panic!("Could not find line");
     }
 }
 
 fn parse_index(lines: &Vec<String>, line_num: usize) -> usize {
     let index_re = Regex::new(r"Monkey (\d+).").unwrap();
-    index_re.captures(&lines[line_num+0]).unwrap().get(1).unwrap().as_str().parse::<usize>().unwrap()
+    index_re
+        .captures(&lines[line_num + 0])
+        .unwrap()
+        .get(1)
+        .unwrap()
+        .as_str()
+        .parse::<usize>()
+        .unwrap()
 }
 
 fn parse_monkey(lines: &Vec<String>, line_num: usize) -> Monkey {
     Monkey {
         index: parse_index(&lines, line_num),
-        items: parse_starting_items(&lines, line_num+1),
-        operation: parse_operation(&lines, line_num+2),
-        test: parse_test(&lines, line_num+3),
+        items: parse_starting_items(&lines, line_num + 1),
+        operation: parse_operation(&lines, line_num + 2),
+        test: parse_test(&lines, line_num + 3),
     }
 }
 
 fn parse_monkeys(lines: &Vec<String>) -> Vec<Monkey> {
     let mut line_num = 0;
-    let mut monkeys : Vec<Monkey> = Vec::new();
+    let mut monkeys: Vec<Monkey> = Vec::new();
     loop {
         if line_num >= lines.len() {
             return monkeys;
@@ -93,7 +121,7 @@ fn parse_monkeys(lines: &Vec<String>) -> Vec<Monkey> {
             line = &lines[line_num];
             line_num += 1;
         }
-        monkeys.push(parse_monkey(&lines,line_num-1));
+        monkeys.push(parse_monkey(&lines, line_num - 1));
         line_num += 6;
     }
 }
@@ -104,7 +132,7 @@ fn divide_worry_level(x: BigInt) -> BigInt {
 
 fn part_a(lines: &Vec<String>) -> usize {
     let mut monkeys = parse_monkeys(&lines);
-    let mut monkey_inspections = vec![0;monkeys.len()];
+    let mut monkey_inspections = vec![0; monkeys.len()];
     for _ in 0..20 {
         let mut new_items: Vec<Vec<BigInt>> = vec![vec![]; monkeys.len()];
         for monkey in &mut monkeys {
@@ -116,32 +144,34 @@ fn part_a(lines: &Vec<String>) -> usize {
                 let worry_level = divide_worry_level(match &monkey.operation {
                     Operation::Add(x) => item + x,
                     Operation::Mul(x) => item * x,
-                    Operation::Sqr => item*item ,
+                    Operation::Sqr => item * item,
                 });
-                if worry_level.clone() % monkey.test.divisible_by.clone() == 0.to_bigint().unwrap() {
+                if worry_level.clone() % monkey.test.divisible_by.clone() == 0.to_bigint().unwrap()
+                {
                     new_items[monkey.test.if_true].push(worry_level);
-                }
-                else {
+                } else {
                     new_items[monkey.test.if_false].push(worry_level);
                 }
             }
-
         }
 
         // after the round, append any thrown items
         for monkey in &mut monkeys {
             monkey.items.append(&mut new_items[monkey.index]);
         }
-
     }
     monkey_inspections.sort();
-    monkey_inspections[monkey_inspections.len()-1] * monkey_inspections[monkey_inspections.len()-2]
+    monkey_inspections[monkey_inspections.len() - 1]
+        * monkey_inspections[monkey_inspections.len() - 2]
 }
 
 fn part_b(lines: &Vec<String>) -> usize {
     let mut monkeys = parse_monkeys(&lines);
-    let max_mod : BigInt = monkeys.iter().map(|m| m.test.divisible_by.clone()).product();
-    let mut monkey_inspections = vec![0;monkeys.len()];
+    let max_mod: BigInt = monkeys
+        .iter()
+        .map(|m| m.test.divisible_by.clone())
+        .product();
+    let mut monkey_inspections = vec![0; monkeys.len()];
     for _ in 0..10000 {
         let mut new_items: Vec<Vec<BigInt>> = vec![vec![]; monkeys.len()];
         for monkey in &mut monkeys {
@@ -153,26 +183,25 @@ fn part_b(lines: &Vec<String>) -> usize {
                 let worry_level = match &monkey.operation {
                     Operation::Add(x) => item + x,
                     Operation::Mul(x) => item * x,
-                    Operation::Sqr => item*item,
+                    Operation::Sqr => item * item,
                 };
-                if worry_level.clone() % monkey.test.divisible_by.clone() == 0.to_bigint().unwrap() {
+                if worry_level.clone() % monkey.test.divisible_by.clone() == 0.to_bigint().unwrap()
+                {
                     new_items[monkey.test.if_true].push(worry_level % max_mod.clone());
-                }
-                else {
-                    new_items[monkey.test.if_false].push(worry_level% max_mod.clone());
+                } else {
+                    new_items[monkey.test.if_false].push(worry_level % max_mod.clone());
                 }
             }
-
         }
 
         // after the round, append any thrown items
         for monkey in &mut monkeys {
             monkey.items.append(&mut new_items[monkey.index]);
         }
-
     }
     monkey_inspections.sort();
-    monkey_inspections[monkey_inspections.len()-1] * monkey_inspections[monkey_inspections.len()-2]
+    monkey_inspections[monkey_inspections.len() - 1]
+        * monkey_inspections[monkey_inspections.len() - 2]
 }
 
 fn main() {
@@ -180,7 +209,7 @@ fn main() {
         .unwrap()
         .map(|s| s.unwrap())
         .collect();
-    
+
     println!("Part A: {}", part_a(&lines));
 
     // 27019168 too low
