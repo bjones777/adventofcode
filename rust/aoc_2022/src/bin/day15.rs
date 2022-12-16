@@ -1,6 +1,5 @@
 use aoc_2022::*;
 
-use num_bigint::{BigInt, ToBigInt};
 use regex::Regex;
 
 struct SensorData {
@@ -63,15 +62,15 @@ fn could_be_unknown_beacon(lines: &Vec<SensorData>, x: (i32, i32)) -> CouldBeaco
     CouldBeacon::Yes
 }
 
-fn part_b(lines: &Vec<SensorData>) -> BigInt {
+fn part_b(lines: &Vec<SensorData>) -> i64 {
     let mut x = 0;
     let mut y = 0;
     loop {
         match could_be_unknown_beacon(lines, (x, y)) {
             CouldBeacon::Yes => {
-                let mut res = x.to_bigint().unwrap();
-                res *= 4000000;
-                res += y;
+                let mut res = x as i64;
+                res *= 4000000i64;
+                res += y as i64;
                 return res;
             }
             CouldBeacon::No(np) => {
