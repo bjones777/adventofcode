@@ -2,7 +2,6 @@ use aoc_2022::*;
 
 use regex::Regex;
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::collections::VecDeque;
 
 struct ValveDesc {
@@ -33,7 +32,6 @@ fn to_state_string(e: &Entry) -> String {
     for o in &e.open {
         ret_val.push(if *o { '+' } else { '-' });
     }
-    ret_val.push_str(e.pressure.to_string().as_str());
     ret_val
 }
 
@@ -54,13 +52,20 @@ fn to_state_string2(e: &Entry2) -> String {
     ret_val
 }
 
-fn put_in_q(in_q: &mut HashSet<String>, queue: &mut VecDeque<Entry>, e: Entry) {
+fn put_in_q(in_q: &mut HashMap<String,i32>, queue: &mut VecDeque<Entry>, e: Entry) {
     let state_str = to_state_string(&e);
-    if in_q.contains(&state_str) {
-        return;
+    match in_q.get_mut(&state_str) {
+        Some(v) => {
+            if e.pressure <= *v {
+                return;
+            }
+            *v = e.pressure;
+        }
+        None => {
+            in_q.insert(state_str, e.pressure);
+        }
     }
     queue.push_back(e);
-    in_q.insert(state_str);
 }
 
 fn part_a(lines: &Vec<ValveDesc>) -> i32 {
@@ -92,7 +97,7 @@ fn part_a(lines: &Vec<ValveDesc>) -> i32 {
         }
     }
     let mut queue: VecDeque<Entry> = VecDeque::new();
-    let mut in_q: HashSet<String> = HashSet::new();
+    let mut in_q: HashMap<String, i32> = HashMap::new();
     put_in_q(
         &mut in_q,
         &mut queue,
