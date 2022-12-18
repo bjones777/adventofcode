@@ -52,7 +52,7 @@ fn to_state_string2(e: &Entry2) -> String {
     ret_val
 }
 
-fn put_in_q(in_q: &mut HashMap<String,i32>, queue: &mut VecDeque<Entry>, e: Entry) {
+fn put_in_q(in_q: &mut HashMap<String, i32>, queue: &mut VecDeque<Entry>, e: Entry) {
     let state_str = to_state_string(&e);
     match in_q.get_mut(&state_str) {
         Some(v) => {
