@@ -20,13 +20,8 @@ fn mix(encrypted: &mut Vec<(i32, usize)>, i: usize) {
     while num_moves != 0 {
         if num_moves < 0 {
             if src_index == 0 {
-                let v = encrypted[src_index];
-                for i in 0..n - 1 {
-                    encrypted[i] = encrypted[i + 1];
-                }
-                encrypted[n - 1] = v;
-                encrypted.swap(n - 1, n - 2);
-                src_index = n - 2;
+                encrypted.swap(0, n - 1);
+                src_index = n - 1;
             } else {
                 encrypted.swap(src_index, src_index - 1);
                 src_index -= 1;
@@ -86,13 +81,8 @@ fn mix2(encrypted: &mut Vec<(i64, usize)>, i: usize) {
     while num_moves != 0 {
         if num_moves < 0 {
             if src_index == 0 {
-                let v = encrypted[src_index];
-                for i in 0..n - 1 {
-                    encrypted[i] = encrypted[i + 1];
-                }
-                encrypted[n - 1] = v;
-                encrypted.swap(n - 1, n - 2);
-                src_index = n - 2;
+                encrypted.swap(0, n - 1);
+                src_index = n - 1;
             } else {
                 encrypted.swap(src_index, src_index - 1);
                 src_index -= 1;
