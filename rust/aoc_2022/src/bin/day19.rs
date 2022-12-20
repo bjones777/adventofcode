@@ -1,6 +1,7 @@
 use aoc_2022::*;
 
 use regex::Regex;
+use std::collections::HashMap;
 struct Blueprint {
     id: i32,
     ore_robot_cost_ore: i32,
@@ -26,150 +27,200 @@ struct State {
     clay_robots_to_build: i32,
     obsidian_robots_to_build: i32,
     geode_robots_to_build: i32,
-    can_buy_ore_robots: bool,
-    can_buy_clay_robots: bool,
-    can_buy_obsidian_robots: bool,
-    can_buy_geode_robots: bool,
+    max_so_far: i32,
 }
 
-fn could_buy_each_robot(blueprint: &Blueprint,state: &State) -> bool {
-    if state.ore < blueprint.geode_cost_ore || state.obsidian < blueprint.geode_cost_obsidian {
-        return false;
+fn is_no_purchase_reasonable(blueprint: &Blueprint, state: &State) -> bool {
+    if state.ore < blueprint.geode_cost_ore
+        || (state.obsidian < blueprint.geode_cost_obsidian && state.obsidian_robots != 0)
+    {
+        return true;
     }
-    if state.ore < blueprint.obisidian_cost_ore || state.clay < blueprint.obisidian_cost_clay {
-        return false;
+    if state.ore < blueprint.obisidian_cost_ore
+        || (state.clay < blueprint.obisidian_cost_clay && state.clay_robots != 0)
+    {
+        return true;
     }
     if state.ore < blueprint.clay_robot_cost_ore {
-        return false;
+        return true;
     }
-    if state.ore >= blueprint.ore_robot_cost_ore {
-        return false;
+    if state.ore < blueprint.ore_robot_cost_ore {
+        return true;
     }
-    true
+    false
 }
 
-fn get_max_geodes_with_state(blueprint: &Blueprint,state: &State,phase: i32) -> i32 {
-    if state.minutes_left == 0 {
-        return state.geode
+fn made_bad_choice(blueprint: &Blueprint, state: &State) -> bool {
+    if state.ore_robots_to_build != 0 {
+        let mut max_ore = blueprint.ore_robot_cost_ore;
+        max_ore = i32::max(blueprint.clay_robot_cost_ore, max_ore);
+        max_ore = i32::max(blueprint.obisidian_cost_ore, max_ore);
+        max_ore = i32::max(blueprint.geode_cost_ore, max_ore);
+        if state.ore_robots >= max_ore {
+            return true;
+        }
     }
-    let ret_val = match phase {
+    if state.clay_robots_to_build != 0 {
+        if state.clay_robots >= blueprint.obisidian_cost_clay {
+            return true;
+        }
+    }
+    if state.obsidian_robots_to_build != 0 {
+        if state.obsidian_robots >= blueprint.geode_cost_obsidian {
+            return true;
+        }
+    }
+    false
+}
+
+fn get_max_geodes_with_state(
+    memo: &mut HashMap<State, i32>,
+    blueprint: &Blueprint,
+    state: &mut State,
+    phase: i32,
+) -> i32 {
+    if phase == 4
+        && state.max_so_far - state.geode
+            >= (state.minutes_left * (state.minutes_left + 1)) / 2
+                + state.geode_robots * state.minutes_left
+    {
+        return 0;
+    }
+    if state.minutes_left == 0 {
+        state.max_so_far = i32::max(state.geode, state.max_so_far);
+        return state.geode;
+    }
+    return match phase {
         4 => {
-            if state.can_buy_geode_robots {
-                let mut new_state = state.clone();
-                new_state.can_buy_geode_robots = !(new_state.ore >= blueprint.geode_cost_ore && new_state.obsidian >= blueprint.geode_cost_obsidian);
-                let mut max_value = get_max_geodes_with_state( blueprint,&new_state,phase-1);
-                while new_state.ore >= blueprint.geode_cost_ore && new_state.obsidian >= blueprint.geode_cost_obsidian {
-                    new_state.ore -= blueprint.geode_cost_ore;
-                    new_state.obsidian -= blueprint.geode_cost_obsidian;
-                    new_state.geode_robots_to_build += 1;
-                    new_state.can_buy_geode_robots = !(new_state.ore >= blueprint.geode_cost_ore && new_state.obsidian >= blueprint.geode_cost_obsidian);
-                    max_value = i32::max(max_value, get_max_geodes_with_state( blueprint, &new_state, phase-1));
-                }
-                max_value
+            let mut max_value = 0;
+            if state.ore >= blueprint.geode_cost_ore
+                && state.obsidian >= blueprint.geode_cost_obsidian
+            {
+                state.ore -= blueprint.geode_cost_ore;
+                state.obsidian -= blueprint.geode_cost_obsidian;
+                state.geode_robots_to_build += 1;
+
+                max_value = i32::max(
+                    max_value,
+                    get_max_geodes_with_state(memo, blueprint, state, 0),
+                );
+
+                state.ore += blueprint.geode_cost_ore;
+                state.obsidian += blueprint.geode_cost_obsidian;
+                state.geode_robots_to_build -= 1;
             }
-            else {
-                get_max_geodes_with_state(blueprint, state, phase-1)
-            }
-        },
+
+            max_value = i32::max(
+                max_value,
+                get_max_geodes_with_state(memo, blueprint, state, phase - 1),
+            );
+            max_value
+        }
         3 => {
-            if state.can_buy_obsidian_robots {
-                let mut new_state = state.clone();
-                new_state.can_buy_obsidian_robots = !(new_state.ore >= blueprint.obisidian_cost_ore && new_state.clay >= blueprint.obisidian_cost_clay);
-                let mut max_value = get_max_geodes_with_state( blueprint,&new_state,phase-1);
-                while new_state.ore >= blueprint.obisidian_cost_ore && new_state.clay >= blueprint.obisidian_cost_clay {
-                    new_state.ore -= blueprint.obisidian_cost_ore;
-                    new_state.clay -= blueprint.obisidian_cost_clay;
-                    new_state.obsidian_robots_to_build += 1;
-                    new_state.can_buy_obsidian_robots = !(new_state.ore >= blueprint.obisidian_cost_ore && new_state.clay >= blueprint.obisidian_cost_clay);
-                    max_value = i32::max(max_value, get_max_geodes_with_state( blueprint, &new_state, phase-1));
-                }
-                max_value
+            let mut max_value = 0;
+            if state.ore >= blueprint.obisidian_cost_ore
+                && state.clay >= blueprint.obisidian_cost_clay
+            {
+                state.ore -= blueprint.obisidian_cost_ore;
+                state.clay -= blueprint.obisidian_cost_clay;
+                state.obsidian_robots_to_build += 1;
+
+                max_value = i32::max(
+                    max_value,
+                    get_max_geodes_with_state(memo, blueprint, state, 0),
+                );
+
+                state.ore += blueprint.obisidian_cost_ore;
+                state.clay += blueprint.obisidian_cost_clay;
+                state.obsidian_robots_to_build -= 1;
             }
-            else {
-                get_max_geodes_with_state(blueprint, state, phase-1)
-            }
-        },
+            max_value = i32::max(
+                max_value,
+                get_max_geodes_with_state(memo, blueprint, state, phase - 1),
+            );
+            max_value
+        }
         2 => {
-            if state.can_buy_clay_robots {
-                let mut new_state = state.clone();
-                new_state.can_buy_clay_robots = !(new_state.ore >= blueprint.clay_robot_cost_ore);
-                let mut max_value = get_max_geodes_with_state( blueprint,state,phase-1);
-                while new_state.ore >= blueprint.clay_robot_cost_ore {
-                    new_state.ore -= blueprint.clay_robot_cost_ore;
-                    new_state.clay_robots_to_build += 1;
-                    new_state.can_buy_clay_robots = !(new_state.ore >= blueprint.clay_robot_cost_ore);
-                    max_value = i32::max(max_value, get_max_geodes_with_state( blueprint, &new_state, phase-1));
-                }
-                max_value
+            let mut max_value = 0;
+            if state.ore >= blueprint.clay_robot_cost_ore {
+                state.ore -= blueprint.clay_robot_cost_ore;
+                state.clay_robots_to_build += 1;
+
+                max_value = i32::max(
+                    max_value,
+                    get_max_geodes_with_state(memo, blueprint, state, 0),
+                );
+
+                state.ore += blueprint.clay_robot_cost_ore;
+                state.clay_robots_to_build -= 1;
             }
-            else {
-                get_max_geodes_with_state(blueprint, state, phase-1)
-            }
-        },
+
+            max_value = i32::max(
+                max_value,
+                get_max_geodes_with_state(memo, blueprint, state, phase - 1),
+            );
+            max_value
+        }
         1 => {
-            if state.can_buy_ore_robots {
-                let mut new_state = state.clone();
-                new_state.can_buy_ore_robots = !(new_state.ore >= blueprint.ore_robot_cost_ore);
-                let mut max_value = get_max_geodes_with_state( blueprint,state,phase-1);
-                while new_state.ore >= blueprint.ore_robot_cost_ore {
-                    new_state.ore -= blueprint.ore_robot_cost_ore;
-                    new_state.ore_robots_to_build += 1;
-                    new_state.can_buy_ore_robots = !(new_state.ore >= blueprint.ore_robot_cost_ore);
-                    max_value = i32::max(max_value, get_max_geodes_with_state( blueprint, &new_state, phase-1));
-                }
-                max_value
+            let mut max_value = 0;
+            if state.ore >= blueprint.ore_robot_cost_ore {
+                state.ore -= blueprint.ore_robot_cost_ore;
+                state.ore_robots_to_build += 1;
+
+                max_value = i32::max(
+                    max_value,
+                    get_max_geodes_with_state(memo, blueprint, state, 0),
+                );
+
+                state.ore += blueprint.ore_robot_cost_ore;
+                state.ore_robots_to_build -= 1;
             }
-            else {
-                get_max_geodes_with_state(blueprint, state, phase-1)
-            }
-        },
+
+            max_value = i32::max(
+                max_value,
+                get_max_geodes_with_state(memo, blueprint, state, phase - 1),
+            );
+            max_value
+        }
         0 => {
             // if we left money on the table, when we could have spent some, that never makes sense
-            if could_buy_each_robot(blueprint,state) {
+            if state.ore_robots_to_build == 0
+                && state.clay_robots_to_build == 0
+                && state.obsidian_robots_to_build == 0
+                && state.geode_robots_to_build == 0
+                && !is_no_purchase_reasonable(blueprint, state)
+            {
+                return 0;
+            }
+            if made_bad_choice(blueprint, state) {
                 return 0;
             }
             let mut new_state = state.clone();
             new_state.ore += new_state.ore_robots;
             new_state.clay += new_state.clay_robots;
             new_state.obsidian += new_state.obsidian_robots;
-            new_state.geode += new_state.obsidian_robots;
+            new_state.geode += new_state.geode_robots;
             new_state.ore_robots += new_state.ore_robots_to_build;
             new_state.clay_robots += new_state.clay_robots_to_build;
             new_state.obsidian_robots += new_state.obsidian_robots_to_build;
             new_state.geode_robots += new_state.geode_robots_to_build;
-
-            if new_state.clay_robots_to_build > 0 || new_state.obsidian_robots_to_build > 0 || new_state.geode_robots_to_build > 0 {
-                new_state.can_buy_ore_robots = true;
-            }
-
-            if new_state.ore_robots_to_build > 0 || new_state.obsidian_robots_to_build > 0 || new_state.geode_robots_to_build > 0 {
-                new_state.can_buy_clay_robots = true;
-            }
-
-            if new_state.ore_robots_to_build > 0 || new_state.clay_robots_to_build > 0   || new_state.geode_robots_to_build > 0 {
-                new_state.can_buy_obsidian_robots = true;
-            }
-
-            if new_state.ore_robots_to_build > 0 || new_state.clay_robots_to_build > 0   || new_state.obsidian_robots_to_build  > 0 {
-                new_state.can_buy_geode_robots = true;
-            }
             new_state.ore_robots_to_build = 0;
             new_state.clay_robots_to_build = 0;
             new_state.obsidian_robots_to_build = 0;
             new_state.geode_robots_to_build = 0;
             new_state.minutes_left -= 1;
-            get_max_geodes_with_state( blueprint, &new_state, 4)
-        },
+            let ret_val = get_max_geodes_with_state(memo, blueprint, &mut new_state, 4);
+            state.max_so_far = new_state.max_so_far;
+            ret_val
+        }
         _ => {
-            panic!("Unknown phase {}",phase);
+            panic!("Unknown phase {}", phase);
         }
     };
-    ret_val
 }
- 
 
-fn get_max_geodes(blueprint: &Blueprint) -> i32 {
-    let initial = State {
+fn get_max_geodes(blueprint: &Blueprint, num_minutes: i32) -> i32 {
+    let mut initial = State {
         ore_robots: 1,
         clay_robots: 0,
         obsidian_robots: 0,
@@ -178,32 +229,35 @@ fn get_max_geodes(blueprint: &Blueprint) -> i32 {
         clay: 0,
         obsidian: 0,
         geode: 0,
-        minutes_left: 24,
+        minutes_left: num_minutes,
         ore_robots_to_build: 0,
         clay_robots_to_build: 0,
         obsidian_robots_to_build: 0,
         geode_robots_to_build: 0,
-        can_buy_ore_robots: true,
-        can_buy_clay_robots: true,
-        can_buy_obsidian_robots: true,
-        can_buy_geode_robots: true,
+        max_so_far: 0,
     };
-    get_max_geodes_with_state(&blueprint, &initial, 4)
+    let mut memo: HashMap<State, i32> = HashMap::new();
+    get_max_geodes_with_state(&mut memo, &blueprint, &mut initial, 4)
 }
-
 
 fn part_a(lines: &Vec<Blueprint>) -> i32 {
     let mut quality_level = 0;
     for blueprint in lines {
-        let ql = get_max_geodes(blueprint);
+        let ql = get_max_geodes(blueprint, 24);
         println!("ql {} for blueprint {}", ql, blueprint.id);
         quality_level += ql * blueprint.id;
     }
     quality_level
 }
 
-fn part_b() -> i32 {
-    0
+fn part_b(lines: &Vec<Blueprint>) -> i32 {
+    let mut prod = 1;
+    for blueprint in lines.iter().take(3) {
+        let ql = get_max_geodes(blueprint, 32);
+        println!("ql {} for blueprint {}", ql, blueprint.id);
+        prod *= ql;
+    }
+    prod
 }
 
 fn main() {
@@ -229,5 +283,5 @@ fn main() {
         })
         .collect();
     println!("Part A: {}", part_a(&lines));
-    println!("Part B: {}", part_b());
+    println!("Part B: {}", part_b(&lines));
 }
