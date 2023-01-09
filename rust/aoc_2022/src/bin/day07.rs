@@ -92,6 +92,7 @@ fn build_dir_structure(lines: &Vec<String>, line_index: &mut usize, cd: &mut Ent
         }
     }
 }
+
 fn build_directory_structure(lines: &Vec<String>) -> Entry {
     let mut root_entry = Entry::new_dir();
     build_dir_structure(lines, &mut 0, &mut root_entry, 0);
