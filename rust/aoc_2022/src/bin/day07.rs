@@ -1,5 +1,6 @@
 use aoc_2022::*;
 
+use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashMap;
 
@@ -24,19 +25,6 @@ impl Entry {
             children: HashMap::new(),
             is_file: false,
         }
-    }
-
-    fn traverse(&mut self, name: &String) -> &mut Entry {
-        let parts: Vec<String> = name.split("/").map(|s| String::from(s)).collect();
-        let mut current_entry = self;
-        for i in 1..(parts.len() - 1) {
-            let part = &parts[i];
-            match current_entry.children.get_mut(part) {
-                Some(entry) => current_entry = entry,
-                None => panic!("Can't traverse"),
-            }
-        }
-        current_entry
     }
 
     fn add_dir(&mut self, name: String) {
@@ -65,44 +53,48 @@ impl Entry {
     }
 }
 
-fn build_directory_structure(lines: &Vec<String>) -> Entry {
-    let dir_re = Regex::new(r"^dir (.+)$").unwrap();
-    let file_re = Regex::new(r"^(\d+) (.+)$").unwrap();
-    let cd_cmd_re = Regex::new(r"^\$ cd (.+)$").unwrap();
-    let ls_cmd_re = Regex::new(r"^\$ ls$").unwrap();
-    let mut root_entry = Entry::new_dir();
-    let mut current_dir = String::from("/");
-    for line in lines {
-        if let Some(cap) = dir_re.captures(line) {
-            let cd = root_entry.traverse(&current_dir);
+fn build_dir_structure(lines: &Vec<String>, line_index: &mut usize, cd: &mut Entry, depth: usize) {
+    lazy_static! {
+        static ref DIR_RE: Regex = Regex::new(r"^dir (.+)$").unwrap();
+        static ref FILE_RE: Regex = Regex::new(r"^(\d+) (.+)$").unwrap();
+        static ref CD_CMD_RE: Regex = Regex::new(r"^\$ cd (.+)$").unwrap();
+        static ref LS_CMD_RE: Regex = Regex::new(r"^\$ ls$").unwrap();
+    }
+
+    while *line_index < lines.len() {
+        let line = &lines[*line_index];
+        *line_index += 1;
+        if let Some(cap) = DIR_RE.captures(line) {
             let dir_name = cap.get(1).unwrap().as_str();
             cd.add_dir(String::from(dir_name));
-        } else if let Some(cap) = file_re.captures(line) {
-            let cd = root_entry.traverse(&current_dir);
+        } else if let Some(cap) = FILE_RE.captures(line) {
             let file_name = cap.get(2).unwrap().as_str();
             let file_size = cap.get(1).unwrap().as_str().parse::<u64>().unwrap();
             cd.add_file(String::from(file_name), file_size);
-        } else if let Some(cap) = cd_cmd_re.captures(line) {
+        } else if let Some(cap) = CD_CMD_RE.captures(line) {
             let dir_name = cap.get(1).unwrap().as_str();
             if dir_name == ".." {
-                let mut parts: Vec<String> =
-                    current_dir.split("/").map(|s| String::from(s)).collect();
-                if !parts.is_empty() {
-                    parts.pop();
-                    parts.pop();
-                }
-                current_dir = parts.join("/") + "/";
+                return;
             } else if dir_name == "/" {
-                current_dir = String::from("/");
+                assert!(depth == 0);
             } else {
-                current_dir = current_dir + dir_name + "/";
+                build_dir_structure(
+                    lines,
+                    line_index,
+                    cd.children.get_mut(dir_name).unwrap(),
+                    depth + 1,
+                );
             }
-        } else if let Some(_) = ls_cmd_re.captures(line) {
+        } else if let Some(_) = LS_CMD_RE.captures(line) {
         } else {
             print!("{}", line);
             panic!("Didn't match");
         }
     }
+}
+fn build_directory_structure(lines: &Vec<String>) -> Entry {
+    let mut root_entry = Entry::new_dir();
+    build_dir_structure(lines, &mut 0, &mut root_entry, 0);
     root_entry
 }
 
